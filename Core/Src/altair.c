@@ -6,20 +6,19 @@
  */
 
 #include "main.h"
-
 #include "usart.h"
-
 #include <stdlib.h>
-
 
 #include "DateTime.h"
 #include "logger.h"
-#include "collector_task.h"
+
 #include "global_queues.h"
+#include "tasks/collector_task.h"
+
 
 
 int _write(int file, char* ptr, int len);
-uint32_t get_time();
+static uint32_t get_time();
 
 
 void altair(void* context)
@@ -27,11 +26,12 @@ void altair(void* context)
 	static CollectorSetting settings = {0};
 	DateTime datetime;
 
+
+
 	//uint32_t timestamp = get_time();
 	uint32_t timestamp = 1743517905;
 
 	settings.delay = 2000;
-
 
 	parse_timestamp(timestamp, &datetime);
 
@@ -42,21 +42,31 @@ void altair(void* context)
 
 
 
+	const osThreadAttr_t EventTask = {
+	  .name = "eventTask",
+	  .stack_size = 128 * 4 * 8,
+	  .priority = osPriorityLow7,
+	};
+
 	const osThreadAttr_t collectDataTask = {
 	  .name = "collectDataTask",
 	  .stack_size = 128 * 4 * 8,
-	  .priority = osPriorityRealtime7,  // Thread priority
+	  .priority = osPriorityRealtime7,
 	};
 
 
 	const osThreadAttr_t beaconLoggerTask = {
 	  .name = "beaconLoggerTask",
 	  .stack_size = 128 * 4 * 16,
-	  .priority = osPriorityLow7,  // Thread priority
+	  .priority = osPriorityLow7,
 	};
 
 
-	osThreadId_t beacon_logger = osThreadNew(logger_beacon_task, (void*) &beacon_queue, &beaconLoggerTask);
+
+
+
+
+	osThreadId_t beacon_logger = osThreadNew(logger_beacon_task, NULL, &beaconLoggerTask);
 
 	if(beacon_logger != NULL){
 		printf("created beacon logger \r\n");
@@ -69,6 +79,22 @@ void altair(void* context)
 	if(collector != NULL){
 		printf("created collector \r\n");
 	}
+
+//	osThreadId_t event = osThreadNew(event_task, (void*) event_queue, &EventTask);
+//
+//	if(event != NULL){
+//		printf("created event task \r\n");
+//	}
+//
+//	EventData data;
+//	RTC_ReadDateTime(&datetime);
+//	data.timestamp = datetime_to_timestamp(&datetime);
+//	data.event = EVENT_INIT;
+//
+//	xQueueSend(event_queue, &data, 0);
+
+
+
 
 
 	osStatus_t status =  osThreadTerminate(osThreadGetId());
@@ -84,7 +110,7 @@ void altair(void* context)
 }
 
 //1743517905
-uint32_t get_time()
+static uint32_t get_time()
 {
 	char time_buffer[10] = {0};
 	char input_buffer[1] = {0};

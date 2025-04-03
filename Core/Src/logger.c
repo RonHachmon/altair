@@ -13,8 +13,9 @@
 #include "DateTime.h"
 #include "dht.h"
 #include "logger.h"
-#include "beacon_data.h"
 #include "global_queues.h"
+
+#include "sensor_data.h"
 
 
 #define MAX_DATA_FILES 7
@@ -45,29 +46,40 @@ void init_logger()
 void logger_beacon_task(void* context)
 {
 
+
+	//osMessageQueueId_t queue = (osMessageQueueId_t) context;
+
     FIL fil;
     FRESULT fres;
 
     char file_names[MAX_DATA_FILES][FILENAME_SIZE] = {0};
     uint8_t file_index = 0;
 
-    uint8_t receivedValue;
+    fres = f_mkdir("0:/sensor");
+    if (fres != FR_OK && fres != FR_EXIST) {
+	    	printf("f_open error to directory (%i)\r\n", fres);
+	        while(1);
+	}
+
     BYTE writeBuf[128];
     UINT bytesWrote;
     char current_file_name[9];
 
-    char whole_file_path[16];
+    char whole_file_path[32];
 
     while(1){
-    	BeaconData data;
+    	SensorData data;
     	DateTime datetime;
     	uint16_t data_len;
     	osStatus_t status;
-    	status = osMessageQueueGet(beacon_queue, &data, 0, HAL_MAX_DELAY);
+
+
+		status = osMessageQueueGet(g_sensor_queue, &data, 0, HAL_MAX_DELAY);
+    	//status = xQueueReceive(sensor_queue, &data, 5000);
 
     	 if(status == osOK)
     	 {
-			parse_timestamp(data.timestamp,&datetime);
+			parse_timestamp(data.timestamp, &datetime);
 			RTC_DateTimeToString((char*) writeBuf, &datetime);
 
 			strncpy(current_file_name,writeBuf,8);
@@ -92,7 +104,7 @@ void logger_beacon_task(void* context)
 				strcpy(file_names[file_index], current_file_name);
 
 				//open file
-				sprintf(whole_file_path,"0:/%s",file_names[file_index]);
+				sprintf(whole_file_path,"0:/sensor/%s", file_names[file_index]);
 
 			    fres = f_open(&fil, whole_file_path, FA_CREATE_ALWAYS | FA_WRITE);
 			    if (fres != FR_OK) {
@@ -106,8 +118,8 @@ void logger_beacon_task(void* context)
 
 			data_len = strlen((char*)writeBuf);
 
-			sprintf(writeBuf + data_len, "\r\nTemperature: %f\r\nHumidity: %f\r\nLight: %f\r\nMode: Safe\r\n ---------------\r\n",
-					data.last_temp, data.last_humid, data.last_light);
+			sprintf(writeBuf + data_len, "\r\nTemperature: %f\r\nHumidity: %f\r\nLight: %d\r\nMode: Safe\r\n ---------------\r\n",
+					data.temp, data.humid, data.light);
 
 			data_len = strlen((char*)writeBuf);
 			fres = f_write(&fil, writeBuf, data_len, &bytesWrote);

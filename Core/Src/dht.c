@@ -45,10 +45,13 @@ uint8_t read_DHT(DHT* dht, CelsiusAndHumidity* res)
 
 #ifdef osCMSIS
 	HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+	osPriority_t previous_priority;
+	osThreadId_t thread_id;
 	if(osKernelGetState() == osKernelRunning)
 	{
-		osPriority_t previous_priority = osThreadGetPriority(osThreadId_t thread_id);
-		osThreadId_t thread_id = osThreadGetId();
+		thread_id = osThreadGetId();
+		previous_priority = osThreadGetPriority(thread_id);
+
 
 		osThreadSetPriority(thread_id, osPriorityHigh7);
 	}
@@ -60,6 +63,7 @@ uint8_t read_DHT(DHT* dht, CelsiusAndHumidity* res)
     uint8_t status = run(dht, res);
 
 #ifdef CMSIS_OS2_H_
+
     if(osKernelGetState() == osKernelRunning)
     {
     	osThreadSetPriority(thread_id, previous_priority);

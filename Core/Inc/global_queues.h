@@ -7,9 +7,10 @@
 
 #ifndef INC_GLOBAL_QUEUES_H_
 #define INC_GLOBAL_QUEUES_H_
+
 #include "cmsis_os2.h"
 
-extern osMessageQueueId_t beacon_queue;
+extern osMessageQueueId_t g_sensor_queue;
 
 void global_queues_init(void);
 

@@ -10,7 +10,6 @@
 
 //void save_to_file_task(void * context);
 void init_logger();
-void save_to_datetime(DateTime* datetime);
 void logger_beacon_task(void* context);
 
 #endif /* INC_LOGGER_H_ */

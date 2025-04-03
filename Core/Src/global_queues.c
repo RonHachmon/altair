@@ -6,14 +6,14 @@
  */
 
 #include "global_queues.h"
-#include "cmsis_os.h" // Include the CMSIS-RTOS header
-#include "beacon_data.h"
+#include "sensor_data.h"
 
-osMessageQueueId_t beacon_queue;
+osMessageQueueId_t g_sensor_queue;
 
 
 void global_queues_init(void)
 {
-   beacon_queue = osMessageQueueNew(16, sizeof(BeaconData), NULL); // Adjust size and data type
+	g_sensor_queue = osMessageQueueNew(16, sizeof(SensorData), NULL);
 
  }
+
