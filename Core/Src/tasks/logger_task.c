@@ -5,14 +5,16 @@
  *      Author: 97254
  */
 
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include "ff_gen_drv.h"
 
+
+#include "tasks/logger_task.h"
 #include "DateTime.h"
 #include "dht.h"
-#include "logger.h"
 #include "global_queues.h"
 
 #include "sensor_data.h"
@@ -125,8 +127,8 @@ void logger_beacon_task(void* context)
 			fres = f_write(&fil, writeBuf, data_len, &bytesWrote);
 
 			if (fres == FR_OK) {
-				printf("writing total bytes %i:\r\n",bytesWrote);
-				printf("%s\r\n", writeBuf);
+				//printf("writing total bytes %i:\r\n",bytesWrote);
+				//printf("%s\r\n", writeBuf);
 			} else {
 				printf("f_write error (%i)\r\n", fres);
 			}

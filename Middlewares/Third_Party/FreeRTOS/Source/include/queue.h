@@ -61,7 +61,6 @@ typedef struct QueueDefinition * QueueSetHandle_t;
  */
 typedef struct QueueDefinition * QueueSetMemberHandle_t;
 
-
 /* For internal use only. */
 #define	queueSEND_TO_BACK		( ( BaseType_t ) 0 )
 #define	queueSEND_TO_FRONT		( ( BaseType_t ) 1 )

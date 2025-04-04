@@ -11,22 +11,16 @@
 #include <string.h>
 #include <stdarg.h>
 #include "ff_gen_drv.h"
-#include "queue.h"
 #include "DateTime.h"
+#include "global_queues.h"
 
 static void print_event_status(char *buffer, AltairEvent event);
 
 
 void event_task(void* context)
 {
-	//osMessageQueueId_t queue = (osMessageQueueId_t) context;
-	QueueHandle_t event_queue =(QueueHandle_t) context;
-
-
     FIL fil;
     FRESULT fres;
-
-    uint8_t file_index = 0;
 
     fres = f_mkdir("0:/events");
     if (fres != FR_OK && fres != FR_EXIST) {
@@ -48,13 +42,13 @@ void event_task(void* context)
     	EventData data;
     	DateTime datetime;
     	uint16_t data_len;
-    	BaseType_t status;
+    	osStatus_t status;
 
 
 		//status = osMessageQueueGet(queue, &data, 0, HAL_MAX_DELAY);
-    	status = xQueueReceive(event_queue, &data, HAL_MAX_DELAY);
+    	status = osMessageQueueGet(g_event_queue, &data, 0, HAL_MAX_DELAY);
 
-    	 if(status == pdTRUE)
+    	 if(status == osOK)
     	 {
 			parse_timestamp(data.timestamp, &datetime);
 			RTC_DateTimeToString((char*) writeBuf, &datetime);
@@ -91,7 +85,7 @@ static void print_event_status(char *buffer, AltairEvent event) {
             sprintf(buffer, "\r\nStatus: OK to ERROR\r\n---------------\r\n");
             break;
         case EVENT_ERROR_TO_OK:
-            sprintf(buffer, "\r\nStatus:ERROR to OK\r\n---------------\r\n");
+            sprintf(buffer, "\r\nStatus: ERROR to OK\r\n---------------\r\n");
             break;
         case EVENT_WD_RESET:
             sprintf(buffer, "\r\nStatus: Watchdog Reset\r\n---------------\r\n");

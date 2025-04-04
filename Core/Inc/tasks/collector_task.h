@@ -10,9 +10,13 @@
 
 typedef struct CollectorSetting{
 	uint16_t delay;
-	uint16_t safe_temp;
-	uint16_t safe_humidity;
-	uint16_t safe_battery;
+	uint16_t min_temp;
+	uint16_t max_temp;
+	uint16_t min_humidity;
+	uint16_t max_humidity;
+	uint8_t min_light;
+	float safe_voltage;
+
 }CollectorSetting;
 
 void collection_task(void* context);

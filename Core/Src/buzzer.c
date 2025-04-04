@@ -23,15 +23,10 @@ void buzzer_run(uint16_t time_to_run)
 	if(NULL == buzzer.PMW_clock ){
 		return;
 	}
+
 	HAL_TIM_Base_Start(buzzer.PMW_clock);
 	HAL_TIM_PWM_Start(buzzer.PMW_clock, buzzer.channel);
 	osDelay(time_to_run);
-
-//#ifdef FREERTOS_CONFIG_H
-//    osDelay(time_to_run); // FreeRTOS Delay
-//#else
-//    HAL_Delay(time_to_run); // Bare Metal Delay
-//#endif
 
 	HAL_TIM_PWM_Stop(buzzer.PMW_clock, buzzer.channel);
 }
@@ -54,6 +49,6 @@ void buzzer_end()
 		return;
 	}
 
-	HAL_TIM_Base_Stop(buzzer.PMW_clock);
+	HAL_TIM_Base_Start(buzzer.PMW_clock);
 	HAL_TIM_PWM_Stop(buzzer.PMW_clock, buzzer.channel);
 }

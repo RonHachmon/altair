@@ -12,6 +12,8 @@
 
 extern osMessageQueueId_t g_sensor_queue;
 
+extern osMessageQueueId_t g_event_queue;
+
 void global_queues_init(void);
 
 #endif /* INC_GLOBAL_QUEUES_H_ */

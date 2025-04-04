@@ -29,7 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "altair_main.h"
+#include "tasks/init_altair_task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -113,7 +113,7 @@ int main(void)
       .priority = osPriorityNormal,  // Thread priority
   };
 
-  osThreadId_t initTask = osThreadNew(altair, NULL, &altairTask);
+  osThreadId_t initTask = osThreadNew(init_altair, NULL, &altairTask);
 
 
   /* USER CODE END 2 */

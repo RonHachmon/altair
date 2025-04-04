@@ -5,15 +5,18 @@
  *      Author: Ron Hachmon
  */
 
+
 #include "main.h"
 #include "usart.h"
 #include <stdlib.h>
 
 #include "DateTime.h"
-#include "logger.h"
-
 #include "global_queues.h"
+
+#include "tasks/init_altair_task.h"
 #include "tasks/collector_task.h"
+#include "tasks/event_task.h"
+#include "tasks/logger_task.h"
 
 
 
@@ -21,9 +24,9 @@ int _write(int file, char* ptr, int len);
 static uint32_t get_time();
 
 
-void altair(void* context)
+void init_altair(void* context)
 {
-	static CollectorSetting settings = {0};
+
 	DateTime datetime;
 
 
@@ -31,7 +34,7 @@ void altair(void* context)
 	//uint32_t timestamp = get_time();
 	uint32_t timestamp = 1743517905;
 
-	settings.delay = 2000;
+
 
 	parse_timestamp(timestamp, &datetime);
 
@@ -41,8 +44,8 @@ void altair(void* context)
 	global_queues_init();
 
 
-
-	const osThreadAttr_t EventTask = {
+// ------ Task attributes ---------
+	const osThreadAttr_t eventTask = {
 	  .name = "eventTask",
 	  .stack_size = 128 * 4 * 8,
 	  .priority = osPriorityLow7,
@@ -60,40 +63,52 @@ void altair(void* context)
 	  .stack_size = 128 * 4 * 16,
 	  .priority = osPriorityLow7,
 	};
+// ------ End Task attributes ---------
 
 
-
-
-
+// ------ Create Tasks ---------
 
 	osThreadId_t beacon_logger = osThreadNew(logger_beacon_task, NULL, &beaconLoggerTask);
 
-	if(beacon_logger != NULL){
-		printf("created beacon logger \r\n");
+	if(beacon_logger == NULL){
+		printf("logger task FAIL \r\n");
 	}
 
 	osDelay(1000);
 
+	static CollectorSetting settings = {0};
+	settings.delay = 2000;
+	settings.min_humidity = 30;
+	settings.max_humidity = 52;
+
+	settings.min_temp = 22;
+	settings.max_temp = 26;
+
+	settings.min_light = 60;
+
+	settings.safe_voltage = 2.2;
+
 	osThreadId_t collector = osThreadNew(collection_task,(void*) &settings, &collectDataTask);
 
-	if(collector != NULL){
-		printf("created collector \r\n");
+	if(collector == NULL){
+		printf("collector task FAIL \r\n");
 	}
 
-//	osThreadId_t event = osThreadNew(event_task, (void*) event_queue, &EventTask);
-//
-//	if(event != NULL){
-//		printf("created event task \r\n");
-//	}
-//
-//	EventData data;
-//	RTC_ReadDateTime(&datetime);
-//	data.timestamp = datetime_to_timestamp(&datetime);
-//	data.event = EVENT_INIT;
-//
-//	xQueueSend(event_queue, &data, 0);
+	osThreadId_t event = osThreadNew(event_task, NULL, &eventTask);
+
+	if(event == NULL){
+		printf("created event FAIL \r\n");
+	}
+
+// ------ End Create Tasks ---------
 
 
+	EventData data;
+	RTC_ReadDateTime(&datetime);
+	data.timestamp = datetime_to_timestamp(&datetime);
+	data.event = EVENT_INIT;
+
+	osMessageQueuePut(g_event_queue, &data, 0,0);
 
 
 
