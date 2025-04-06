@@ -5,15 +5,17 @@
  *      Author: 97254
  */
 
-#include "tasks/event_task.h"
-#include "utils/send_queue.h"
+
 
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include "ff_gen_drv.h"
 #include "DateTime.h"
-#include "global_queues.h"
+#include "sync_globals.h"
+
+#include "tasks/event_task.h"
+#include "utils/send_queue.h"
 
 static void print_event_status(char *buffer, AltairEvent event);
 

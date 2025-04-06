@@ -10,7 +10,7 @@
 #include "altair/message_handler.h"
 
 #include "DateTime.h"
-#include "global_queues.h"
+#include "sync_globals.h"
 
 #include "utils/send_queue.h"
 

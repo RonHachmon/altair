@@ -2,10 +2,10 @@
 #include "tim.h"
 #include "main.h"
 
+#include "sync_globals.h"
+
 #include "tasks/collector_task.h"
 #include "tasks/event_task.h"
-
-#include "global_queues.h"
 
 #include "rgb_led.h"
 #include "mod_led.h"
@@ -58,7 +58,7 @@ void collection_task(void* context)
 
             current_data.mode = is_in_range(&setting, &current_data) ? OK_MODE : ERROR_MODE;
 
-            if (g_latest_sensor_data.mode != current_data.mode) {
+            if (g_latest_sensor_data.mode != UNINTILIZED_MODE && g_latest_sensor_data.mode != current_data.mode) {
                 handle_event_transition(&current_data, g_latest_sensor_data.mode);
             }
 
@@ -151,12 +151,12 @@ static uint8_t is_in_range(CollectorSetting* cs, SensorData* sensor)
     uint8_t in_range = 1;
 
     if (sensor->humid < cs->min_humidity) {
-        printf("Humidity %.2f is below minimum %.2f \r\n", sensor->humid, cs->min_humidity);
+        printf("Humidity %d is below minimum %d \r\n", sensor->humid, cs->min_humidity);
         in_range = 0;
     }
 
     if (sensor->temp < cs->min_temp || sensor->temp > cs->max_temp) {
-        printf("Temperature %.2f is out of range (%.2f - %.2f) \r\n", sensor->temp, cs->min_temp, cs->max_temp);
+        printf("Temperature %d is out of range (%d - %d) \r\n", sensor->temp, cs->min_temp, cs->max_temp);
         in_range = 0;
     }
 

@@ -7,13 +7,11 @@
 
 
 #include "tasks/uart_task.h"
-
 #include "usart.h"
-#include "global_queues.h"
+#include "cmsis_os2.h"
+#include "sync_globals.h"
 
-#include "DateTime.h"
-
-
+#define ENTER '\r'
 
 static uint8_t uart_buffer[1];
 
@@ -21,11 +19,9 @@ static Queue recieve_queue;
 
 static osSemaphoreId_t commands;
 
-#define ENTER '\r'
+
 
 int _write(int file, char* ptr, int len);
-
-static void handle_command(uint8_t const *command);
 
 static void wait_for_data_if_all_queues_empty(TransmitContext* ctx);
 
@@ -83,7 +79,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 
     //echo
-    HAL_UART_Transmit(&huart2,(uint8_t*) uart_buffer, 1, HAL_MAX_DELAY);
+    HAL_UART_Transmit(&huart2, (uint8_t*) uart_buffer, 1, HAL_MAX_DELAY);
 
     Queue_enque(&recieve_queue, uart_buffer , 1);
 

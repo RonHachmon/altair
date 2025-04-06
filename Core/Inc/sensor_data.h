@@ -10,10 +10,10 @@
 
 #include <stdint.h>
 
-
-#define ERROR_MODE 0
-#define SAFE_MODE 1
-#define OK_MODE 2
+#define UNINTILIZED_MODE 0
+#define ERROR_MODE 1
+#define SAFE_MODE 2
+#define OK_MODE 3
 
 typedef struct SensorData{
     uint32_t timestamp;

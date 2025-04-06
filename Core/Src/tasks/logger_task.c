@@ -15,7 +15,7 @@
 #include "tasks/logger_task.h"
 #include "DateTime.h"
 #include "dht.h"
-#include "global_queues.h"
+#include "sync_globals.h"
 
 #include "sensor_data.h"
 

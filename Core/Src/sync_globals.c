@@ -5,7 +5,7 @@
  * Author: 97254
  */
 
-#include "global_queues.h"
+#include "sync_globals.h"
 #include "sensor_data.h"
 #include "tasks/event_task.h"
 

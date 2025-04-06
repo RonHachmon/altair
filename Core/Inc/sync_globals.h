@@ -5,8 +5,8 @@
  *      Author: 97254
  */
 
-#ifndef INC_GLOBAL_QUEUES_H_
-#define INC_GLOBAL_QUEUES_H_
+#ifndef INC_SYNC_GLOBALS_H_
+#define INC_SYNC_GLOBALS_H_
 
 #include "cmsis_os2.h"
 
@@ -24,4 +24,4 @@ extern osEventFlagsId_t g_evtID;
 
 void global_queues_init(void);
 
-#endif /* INC_GLOBAL_QUEUES_H_ */
+#endif /* INC_SYNC_GLOBALS_H_ */
