@@ -109,7 +109,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
   const osThreadAttr_t altairTask = {
       .name = "MyTask",
-      .stack_size = 128 * 4 * 4,  // Stack size in bytes (128 words)
+      .stack_size = 128 * 4 * 16,  // Stack size in bytes (128 words)
       .priority = osPriorityNormal,  // Thread priority
   };
 

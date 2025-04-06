@@ -11,7 +11,7 @@
 #include <stdarg.h>
 #include "ff_gen_drv.h"
 
-
+#include "utils/send_queue.h"
 #include "tasks/logger_task.h"
 #include "DateTime.h"
 #include "dht.h"
@@ -48,8 +48,7 @@ void init_logger()
 void logger_beacon_task(void* context)
 {
 
-
-	//osMessageQueueId_t queue = (osMessageQueueId_t) context;
+	Queue* transmit_queue = (Queue*) context;
 
     FIL fil;
     FRESULT fres;
@@ -127,8 +126,12 @@ void logger_beacon_task(void* context)
 			fres = f_write(&fil, writeBuf, data_len, &bytesWrote);
 
 			if (fres == FR_OK) {
-				printf("writing total bytes %i:\r\n",bytesWrote);
-				printf("%s\r\n", writeBuf);
+				Queue_enque(transmit_queue, (uint8_t*) writeBuf , data_len + 1);
+				osEventFlagsSet(g_evtID, FLAG_KEEP_ALIVE);
+
+				printf("wrote sensor to queue \r\n");
+//				printf("writing total bytes %i:\r\n",bytesWrote);
+//				printf("%s\r\n", writeBuf);
 			} else {
 				printf("f_write error (%i)\r\n", fres);
 			}

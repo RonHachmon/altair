@@ -148,12 +148,29 @@ static void handle_event_transition(SensorData* data, uint8_t prev_mode)
 
 static uint8_t is_in_range(CollectorSetting* cs, SensorData* sensor)
 {
-    return (
-        cs->min_humidity <= sensor->humid &&
-        cs->min_temp <= sensor->temp && cs->max_temp >= sensor->temp &&
-        cs->min_light <= sensor->light &&
-        cs->safe_voltage <= sensor->volage
-    );
+    uint8_t in_range = 1;
+
+    if (sensor->humid < cs->min_humidity) {
+        printf("Humidity %.2f is below minimum %.2f \r\n", sensor->humid, cs->min_humidity);
+        in_range = 0;
+    }
+
+    if (sensor->temp < cs->min_temp || sensor->temp > cs->max_temp) {
+        printf("Temperature %.2f is out of range (%.2f - %.2f) \r\n", sensor->temp, cs->min_temp, cs->max_temp);
+        in_range = 0;
+    }
+
+    if (sensor->light < cs->min_light) {
+        printf("Light %d is below minimum %d\r\n", sensor->light, cs->min_light);
+        in_range = 0;
+    }
+
+    if (sensor->volage < cs->safe_voltage) {
+        printf("Voltage %.2f is below safe minimum %.2f\r\n", sensor->volage, cs->safe_voltage);
+        in_range = 0;
+    }
+
+    return in_range;
 }
 
 static uint8_t map_to_percentage(uint16_t adc_value, uint16_t max_value)

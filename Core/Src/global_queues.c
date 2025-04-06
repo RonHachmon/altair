@@ -14,10 +14,14 @@ osMessageQueueId_t g_sensor_queue;
 
 osMessageQueueId_t g_event_queue;
 
+osEventFlagsId_t g_evtID;
+
 void global_queues_init(void)
 {
 	g_sensor_queue = osMessageQueueNew(16, sizeof(SensorData), NULL);
 	g_event_queue =  osMessageQueueNew(16, sizeof(EventData), NULL);
+
+	g_evtID = osEventFlagsNew(NULL);
 
  }
 

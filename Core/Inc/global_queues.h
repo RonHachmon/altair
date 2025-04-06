@@ -10,9 +10,17 @@
 
 #include "cmsis_os2.h"
 
+#define FLAG_SET_TIME           0x00000001UL
+
+#define FLAG_KEEP_ALIVE         0x00000002UL
+#define FLAG_EVENT              0x00000004UL
+#define FLAG_REPORTS            0x00000008UL
+
 extern osMessageQueueId_t g_sensor_queue;
 
 extern osMessageQueueId_t g_event_queue;
+
+extern osEventFlagsId_t g_evtID;
 
 void global_queues_init(void);
 

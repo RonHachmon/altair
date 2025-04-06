@@ -6,6 +6,7 @@
  */
 
 #include "tasks/event_task.h"
+#include "utils/send_queue.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -19,6 +20,7 @@ static void print_event_status(char *buffer, AltairEvent event);
 
 void event_task(void* context)
 {
+	Queue* transmit_queue = (Queue*) context;
     FIL fil;
     FRESULT fres;
 
@@ -61,8 +63,13 @@ void event_task(void* context)
 			fres = f_write(&fil, writeBuf, data_len, &bytesWrote);
 
 			if (fres == FR_OK) {
-				printf("writing total bytes %i:\r\n",bytesWrote);
-				printf("%s\r\n", writeBuf);
+				Queue_enque(transmit_queue, (uint8_t*) writeBuf , data_len + 1);
+				osEventFlagsSet(g_evtID, FLAG_EVENT);
+				printf("wrote event to queue \r\n");
+
+
+//				printf("writing total bytes %i:\r\n",bytesWrote);
+//				printf("%s\r\n", writeBuf);
 			} else {
 				printf("f_write error (%i)\r\n", fres);
 			}

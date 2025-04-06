@@ -9,6 +9,9 @@
 #define INC_TASKS_UART_TASK_H_
 
 #include "main.h"
+#include "utils/send_queue.h"
+
+typedef void (*MessageHandler)(uint8_t const *message, uint8_t len);
 
 typedef enum {
 	PACKET_TYPE_SEND_CLOCK = 0x00,
@@ -20,16 +23,31 @@ typedef enum {
 	PACKET_TYPE_UPDATE_LIGHT = 0x14,
 } PacketType;
 
-typedef struct AltairPacket{
+typedef struct MessagePacket{
 	uint16_t sequence_id;
 	PacketType packetType;
 	uint8_t data_len;
 	uint8_t checksum;
 	uint8_t buffer[128];
-}AltairPacket;
+}MessagePacket;
 
-void send_packet(void* context);
 
-void uart_task(void* context);
+
+
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+
+void init_uart();
+
+
+typedef struct TransmitContext {
+    Queue high_priority;
+    Queue medium_priority;
+    Queue low_priority;
+} TransmitContext;
+void transmit_task(void* context);
+
+
+void recieve_task(void* context);
 
 #endif /* INC_TASKS_UART_TASK_H_ */
