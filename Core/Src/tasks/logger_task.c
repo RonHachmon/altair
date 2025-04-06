@@ -75,6 +75,7 @@ void logger_beacon_task(void* context)
     	osStatus_t status;
 
 
+
 		status = osMessageQueueGet(g_sensor_queue, &data, 0, HAL_MAX_DELAY);
     	//status = xQueueReceive(sensor_queue, &data, 5000);
 
@@ -119,8 +120,8 @@ void logger_beacon_task(void* context)
 
 			data_len = strlen((char*)writeBuf);
 
-			sprintf(writeBuf + data_len, "\r\nTemperature: %f\r\nHumidity: %f\r\nLight: %d\r\nMode: Safe\r\n ---------------\r\n",
-					data.temp, data.humid, data.light);
+			sprintf(writeBuf + data_len, "\r\nTemperature: %.2f\r\nHumidity: %.2f\r\nLight: %d\r\nVoltage %.2f\r\nMode: Safe\r\n ---------------\r\n",
+					data.temp, data.humid, data.light, data.volage);
 
 			data_len = strlen((char*)writeBuf);
 			fres = f_write(&fil, writeBuf, data_len, &bytesWrote);
@@ -128,10 +129,6 @@ void logger_beacon_task(void* context)
 			if (fres == FR_OK) {
 				Queue_enque(transmit_queue, (uint8_t*) writeBuf , data_len + 1);
 				osEventFlagsSet(g_evtID, FLAG_KEEP_ALIVE);
-
-				printf("wrote sensor to queue \r\n");
-//				printf("writing total bytes %i:\r\n",bytesWrote);
-//				printf("%s\r\n", writeBuf);
 			} else {
 				printf("f_write error (%i)\r\n", fres);
 			}
