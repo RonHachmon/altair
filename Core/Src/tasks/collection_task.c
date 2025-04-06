@@ -48,7 +48,6 @@ void collection_task(void* context)
     RGB_LED_Set_Color(COLOR_GREEN);
 
     uint16_t toggle_buzzer = 0;
-    buzzer_start();
 
     while (1) {
 
@@ -66,14 +65,7 @@ void collection_task(void* context)
             g_latest_sensor_data = current_data;
             osMessageQueuePut(g_sensor_queue, &current_data, 0, 0);
 
-            if(toggle_buzzer == 0)
-            {
-            	buzzer_end();
-            }
-            else
-            {
-            	buzzer_start();
-            }
+
 
             toggle_buzzer = (toggle_buzzer + 1) % 2;
 
@@ -85,7 +77,7 @@ void collection_task(void* context)
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_Pin == SW1_Pin) {
-		led_toggle(&red_led);
+		buzzer_end();
 	}
 }
 
@@ -143,10 +135,12 @@ static void handle_event_transition(SensorData* data, uint8_t prev_mode)
     if (prev_mode == OK_MODE) {
     	RGB_LED_Set_Color(COLOR_RED);
         event_data.event = EVENT_OK_TO_ERROR;
+        buzzer_start();
     } else {
 
     	RGB_LED_Set_Color(COLOR_GREEN);
         event_data.event = EVENT_ERROR_TO_OK;
+        buzzer_end();
     }
 
     osMessageQueuePut(g_event_queue, &event_data, 0, 0);
@@ -155,7 +149,7 @@ static void handle_event_transition(SensorData* data, uint8_t prev_mode)
 static uint8_t is_in_range(CollectorSetting* cs, SensorData* sensor)
 {
     return (
-        cs->min_humidity <= sensor->humid && cs->max_humidity >= sensor->humid &&
+        cs->min_humidity <= sensor->humid &&
         cs->min_temp <= sensor->temp && cs->max_temp >= sensor->temp &&
         cs->min_light <= sensor->light &&
         cs->safe_voltage <= sensor->volage

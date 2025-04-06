@@ -17,6 +17,7 @@
 #include "tasks/collector_task.h"
 #include "tasks/event_task.h"
 #include "tasks/logger_task.h"
+#include "tasks/flash_task.h"
 
 
 
@@ -42,6 +43,7 @@ void init_altair(void* context)
 	RTC_SetDateTime(&datetime);
 	init_logger();
 	global_queues_init();
+	reset_flash();
 
 
 // ------ Task attributes ---------
@@ -68,6 +70,20 @@ void init_altair(void* context)
 
 // ------ Create Tasks ---------
 
+	EventData data;
+	RTC_ReadDateTime(&datetime);
+	data.timestamp = datetime_to_timestamp(&datetime);
+	data.event = EVENT_INIT;
+
+	osMessageQueuePut(g_event_queue, &data, 0,0);
+
+	osThreadId_t event = osThreadNew(event_task, NULL, &eventTask);
+
+	if(event == NULL){
+		printf("created event FAIL \r\n");
+	}
+
+
 	osThreadId_t beacon_logger = osThreadNew(logger_beacon_task, NULL, &beaconLoggerTask);
 
 	if(beacon_logger == NULL){
@@ -77,16 +93,7 @@ void init_altair(void* context)
 	osDelay(1000);
 
 	static CollectorSetting settings = {0};
-	settings.delay = 2000;
-	settings.min_humidity = 30;
-	settings.max_humidity = 52;
-
-	settings.min_temp = 22;
-	settings.max_temp = 26;
-
-	settings.min_light = 60;
-
-	settings.safe_voltage = 2.2;
+	read_settings(&settings);
 
 	osThreadId_t collector = osThreadNew(collection_task,(void*) &settings, &collectDataTask);
 
@@ -94,24 +101,12 @@ void init_altair(void* context)
 		printf("collector task FAIL \r\n");
 	}
 
-	osThreadId_t event = osThreadNew(event_task, NULL, &eventTask);
 
-	if(event == NULL){
-		printf("created event FAIL \r\n");
-	}
 
 // ------ End Create Tasks ---------
 
 
-	EventData data;
-	RTC_ReadDateTime(&datetime);
-	data.timestamp = datetime_to_timestamp(&datetime);
-	data.event = EVENT_INIT;
-
-	osMessageQueuePut(g_event_queue, &data, 0,0);
-
-
-
+// ------ Self-Destruct ---------
 	osStatus_t status =  osThreadTerminate(osThreadGetId());
 
 	if(status != osOK){
