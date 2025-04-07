@@ -48,8 +48,6 @@ void init_logger()
 void logger_beacon_task(void* context)
 {
 
-	Queue* transmit_queue = (Queue*) context;
-
     FIL fil;
     FRESULT fres;
 
@@ -124,11 +122,12 @@ void logger_beacon_task(void* context)
 					data.temp, data.humid, data.light, data.volage);
 
 			data_len = strlen((char*)writeBuf);
-			fres = f_write(&fil, writeBuf, data_len, &bytesWrote);
+			//fres = f_write(&fil, writeBuf, data_len, &bytesWrote);
+			fres = f_write(&fil, &data, sizeof(SensorData), &bytesWrote);
+			//printf("size  SensorData %d, size Wrote %d\r\n", sizeof(SensorData), bytesWrote);
 
 			if (fres == FR_OK) {
-				Queue_enque(transmit_queue, (uint8_t*) writeBuf , data_len + 1);
-				osEventFlagsSet(g_evtID, FLAG_KEEP_ALIVE);
+
 			} else {
 				printf("f_write error (%i)\r\n", fres);
 			}

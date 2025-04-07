@@ -43,32 +43,37 @@ uint8_t read_DHT(DHT* dht, CelsiusAndHumidity* res)
 
 	HAL_GPIO_WritePin(dht->m_GPIOx, dht->m_pin_id, GPIO_PIN_RESET);
 
-#ifdef osCMSIS
-	HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
-	osPriority_t previous_priority;
-	osThreadId_t thread_id;
-	if(osKernelGetState() == osKernelRunning)
-	{
-		thread_id = osThreadGetId();
-		previous_priority = osThreadGetPriority(thread_id);
+	osDelay(18);
 
 
-		osThreadSetPriority(thread_id, osPriorityHigh7);
-	}
-	osDelay(18);// FreeRTOS Delay
-#else
-    HAL_Delay(18); // Bare Metal Delay
-#endif
+
+////#ifdef osCMSIS
+//	HAL_GPIO_TogglePin(LED_BLUE_GPIO_Port, LED_BLUE_Pin);
+//	osPriority_t previous_priority;
+//	osThreadId_t thread_id;
+//	if(osKernelGetState() == osKernelRunning)
+//	{
+//		thread_id = osThreadGetId();
+//		previous_priority = osThreadGetPriority(thread_id);
+//
+//
+//		osThreadSetPriority(thread_id, osPriorityHigh7);
+//	}
+//	// FreeRTOS Delay
+////    HAL_Delay(18); // Bare Metal Delay
+////#endif
 
     uint8_t status = run(dht, res);
 
-#ifdef CMSIS_OS2_H_
+////#ifdef CMSIS_OS2_H_
+//  if(osKernelGetState() == osKernelRunning)
+//    {
+//    	osThreadSetPriority(thread_id, previous_priority);
+//    }
+////
+////#endif
 
-    if(osKernelGetState() == osKernelRunning)
-    {
-    	osThreadSetPriority(thread_id, previous_priority);
-    }
-#endif
+
 
 	return status;
 }

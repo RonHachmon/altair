@@ -8,20 +8,12 @@
 #include "tasks/flash_task.h"
 #include "main.h"
 
-
-
-
-
-
-
 #define DELAY_ADDRESS        0x08080000
 #define MIN_TEMP_ADDRESS     0x08080008
 #define MAX_TEMP_ADDRESS     0x08080010
 #define MIN_HUMDITY_ADDRESS  0x08080018
 #define MIN_LIGHT_ADDRESS    0x08080020
 #define SAFE_VOLTAGE_ADDRESS 0x08080028
-
-
 
 
 void reset_flash()
@@ -36,13 +28,13 @@ void reset_flash()
 	uint8_t buffer[8];
 
 
-	uint16_t delay = 2500;
+	uint16_t delay = 500;
 	uint16_t min_temp = 22;
 	uint16_t max_temp = 26;
 
 	uint16_t min_humidity = 30;
 
-	uint16_t min_light = 50;
+	uint16_t min_light = 60;
 	float safe_voltage = 2.2;
 
 

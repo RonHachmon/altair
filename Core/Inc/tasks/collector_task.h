@@ -11,10 +11,10 @@
 #include "main.h"
 
 typedef struct CollectorSetting{
-	uint16_t delay;
-	uint16_t min_temp;
-	uint16_t max_temp;
-	uint16_t min_humidity;
+	uint8_t delay;
+	uint8_t min_temp;
+	uint8_t max_temp;
+	uint8_t min_humidity;
 	uint8_t min_light;
 	float safe_voltage;
 

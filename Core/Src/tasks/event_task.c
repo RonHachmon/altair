@@ -16,9 +16,10 @@
 
 #include "tasks/event_task.h"
 #include "utils/send_queue.h"
+#include "altair/message_handler.h"
 
 static void print_event_status(char *buffer, AltairEvent event);
-
+static void create_event_packet(MessagePacket* packet, EventData* event_data);
 
 void event_task(void* context)
 {
@@ -32,7 +33,9 @@ void event_task(void* context)
 	        while(1);
 	}
 
-    fres = f_open(&fil, "0:/events/event", FA_OPEN_APPEND | FA_WRITE);
+    //fres = f_open(&fil, "0:/events/event", FA_OPEN_APPEND | FA_WRITE);
+
+    fres = f_open(&fil, "0:/events/event", FA_CREATE_ALWAYS | FA_WRITE);
     if (fres != FR_OK) {
     	printf("f_open error to write (%i)\r\n", fres);
         while(1);
@@ -40,6 +43,8 @@ void event_task(void* context)
 
     BYTE writeBuf[128];
     UINT bytesWrote;
+
+    MessagePacket message_packet;
 
 
     while(1){
@@ -49,29 +54,34 @@ void event_task(void* context)
     	osStatus_t status;
 
 
-		//status = osMessageQueueGet(queue, &data, 0, HAL_MAX_DELAY);
     	status = osMessageQueueGet(g_event_queue, &data, 0, HAL_MAX_DELAY);
 
     	 if(status == osOK)
     	 {
-			parse_timestamp(data.timestamp, &datetime);
-			RTC_DateTimeToString((char*) writeBuf, &datetime);
+//			parse_timestamp(data.timestamp, &datetime);
+//			RTC_DateTimeToString((char*) writeBuf, &datetime);
+//
+//			data_len = strlen((char*)writeBuf);
+//			print_event_status(writeBuf + data_len, data.event);
+//
+//
+//			data_len = strlen((char*)writeBuf);
+//			fres = f_write(&fil, &data, sizeof(EventData), &bytesWrote);
 
-			data_len = strlen((char*)writeBuf);
-			print_event_status(writeBuf + data_len, data.event);
 
-
-			data_len = strlen((char*)writeBuf);
-			fres = f_write(&fil, writeBuf, data_len, &bytesWrote);
+    		fres = f_write(&fil, &data, sizeof(EventData), &bytesWrote);
+			//printf("size  EventData %d, size Wrote %d\r\n", sizeof(EventData), bytesWrote);
 
 			if (fres == FR_OK) {
-				Queue_enque(transmit_queue, (uint8_t*) writeBuf , data_len + 1);
+				create_event_packet(&message_packet, &data);
+
+				//Queue_enque(transmit_queue, (uint8_t*) writeBuf , data_len + 1);
+				send_message(transmit_queue, &message_packet);
+
 				osEventFlagsSet(g_evtID, FLAG_EVENT);
 				printf("wrote event to queue \r\n");
 
 
-//				printf("writing total bytes %i:\r\n",bytesWrote);
-//				printf("%s\r\n", writeBuf);
 			} else {
 				printf("f_write error (%i)\r\n", fres);
 			}
@@ -82,6 +92,22 @@ void event_task(void* context)
     	 }
     }
 }
+
+
+static void create_event_packet(MessagePacket* packet, EventData* event_data)
+{
+
+    packet->packetType = PACKET_TYPE_EVENT;
+    packet->data_len = 5;
+    packet->checksum = 8;
+    packet->end_mark = END_MARK;
+
+    packet->buffer[0] = event_data->event;
+
+    uint8_t* timestamp = (uint8_t*)&event_data->timestamp;
+    memcpy(&packet->buffer[1], timestamp, sizeof(uint32_t));
+}
+
 
 static void print_event_status(char *buffer, AltairEvent event) {
     if (buffer == NULL) {

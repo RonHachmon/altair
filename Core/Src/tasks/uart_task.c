@@ -25,7 +25,8 @@ int _write(int file, char* ptr, int len);
 
 static void wait_for_data_if_all_queues_empty(TransmitContext* ctx);
 
-static void transmit_queue_data(Queue* queue);
+static void transmit_queue_data_beacon(Queue* queue);
+static void transmit_queue_event(Queue* queue);
 
 
 void init_uart()
@@ -46,14 +47,14 @@ void transmit_task(void* context)
         wait_for_data_if_all_queues_empty(ctx);
 
         if (Queue_size(&ctx->high_priority) != 0) {
-            transmit_queue_data(&ctx->high_priority);
+        	transmit_queue_data_beacon(&ctx->high_priority);
         }
         else if (Queue_size(&ctx->medium_priority) != 0) {
-            transmit_queue_data(&ctx->medium_priority);
+        	transmit_queue_event(&ctx->medium_priority);
         }
-        else if (Queue_size(&ctx->low_priority) != 0) {
-            transmit_queue_data(&ctx->low_priority);
-        }
+//        else if (Queue_size(&ctx->low_priority) != 0) {
+//            //transmit_queue_data(&ctx->low_priority);
+//        }
     }
 }
 
@@ -66,14 +67,118 @@ static void wait_for_data_if_all_queues_empty(TransmitContext* ctx)
     }
 }
 
-static void transmit_queue_data(Queue* queue)
+
+
+static void transmit_queue_event(Queue* queue)
 {
-    uint8_t current_char;
-    do {
-        current_char = Queue_getChar(queue);
-        HAL_UART_Transmit(&huart2, &current_char, 1, HAL_MAX_DELAY);
-    } while (current_char != '\0');
+
+	uint8_t len = Queue_getChar(queue);
+	uint8_t current_char;
+	printf("EVENT \r\n");
+	printf("data len: %u\r\n", len);
+
+	current_char = Queue_getChar(queue);
+	len--;
+	printf("Type : %u\r\n", current_char);
+
+	current_char = Queue_getChar(queue);
+	len--;
+	printf("checksum : %u\r\n", current_char);
+
+	current_char = Queue_getChar(queue);
+	len--;
+	printf("Event : %u\r\n", current_char);
+
+	uint32_t timstamp;
+	uint8_t* uint32_t_buffer = (uint8_t*) &timstamp;
+	*uint32_t_buffer++ = Queue_getChar(queue);
+	*uint32_t_buffer++ = Queue_getChar(queue);
+	*uint32_t_buffer++ = Queue_getChar(queue);
+	*uint32_t_buffer++ = Queue_getChar(queue);
+	len -= 4;
+
+	printf("Timestamp : %u\r\n", timstamp);
+
+	current_char = Queue_getChar(queue);
+	printf("End char 85? : %u\r\n", current_char);
+
+	printf("-----------------\r\n\r\n");
 }
+
+static void transmit_queue_data_beacon(Queue* queue)
+{
+
+	uint8_t len = Queue_getChar(queue);
+	uint8_t current_char;
+	printf("data len: %u\r\n", len);
+
+	current_char = Queue_getChar(queue);
+	len--;
+	printf("Type : %u\r\n", current_char);
+
+	current_char = Queue_getChar(queue);
+	len--;
+	printf("checksum : %u\r\n", current_char);
+
+	current_char = Queue_getChar(queue);
+	len--;
+	printf("Temp : %u\r\n", current_char);
+
+	current_char = Queue_getChar(queue);
+	len--;
+	printf("Humid : %u\r\n", current_char);
+
+	current_char = Queue_getChar(queue);
+	len--;
+	printf("Light : %u\r\n", current_char);
+
+	current_char = Queue_getChar(queue);
+	len--;
+	printf("Mode : %u\r\n", current_char);
+
+	float voltage;
+	uint8_t* float_buffer = (uint8_t*) &voltage;
+	*float_buffer++ = Queue_getChar(queue);
+	*float_buffer++ = Queue_getChar(queue);
+	*float_buffer++ = Queue_getChar(queue);
+	*float_buffer++ = Queue_getChar(queue);
+	len -= 4;
+
+	printf("Voltage : %.2f\r\n", voltage);
+
+	uint32_t timstamp;
+	uint8_t* uint32_t_buffer = (uint8_t*) &timstamp;
+	*uint32_t_buffer++ = Queue_getChar(queue);
+	*uint32_t_buffer++ = Queue_getChar(queue);
+	*uint32_t_buffer++ = Queue_getChar(queue);
+	*uint32_t_buffer++ = Queue_getChar(queue);
+	len -= 4;
+
+	printf("Timestamp : %u\r\n", timstamp);
+
+	current_char = Queue_getChar(queue);
+	printf("End char 85?: %u\r\n", current_char);
+
+	printf("-----------------\r\n\r\n");
+}
+
+
+
+
+//    do {
+//        current_char = Queue_getChar(queue);
+//        HAL_UART_Transmit(&huart2, &current_char, 1, HAL_MAX_DELAY);
+//    } while (current_char != '\0');
+
+
+//static void transmit_queue_data(Queue* queue)
+//{
+//    uint8_t current_char;
+//    do {
+//        current_char = Queue_getChar(queue);
+//        HAL_UART_Transmit(&huart2, &current_char, 1, HAL_MAX_DELAY);
+//    } while (current_char != '\0');
+//}
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {

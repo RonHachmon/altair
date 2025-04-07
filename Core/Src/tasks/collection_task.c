@@ -56,20 +56,37 @@ void collection_task(void* context)
         if (read_all_sensors(&dht, &potentiometer, &light_sensor, &ch, &pot_val, &light_val)) {
             process_sensor_data(&current_data, &ch, pot_val, light_val, &datetime);
 
-            current_data.mode = is_in_range(&setting, &current_data) ? OK_MODE : ERROR_MODE;
+            current_data.mode = is_in_range(&setting, &current_data) == TRUE ? OK_MODE : ERROR_MODE;
+
+            if(current_data.mode == ERROR_MODE){
+                if(current_data.volage < setting.safe_voltage)
+                {
+                	current_data.mode = SAFE_MODE;
+                }
+                //buzzer_start();
+                RGB_LED_Set_Color(COLOR_RED);
+            }
+            else{
+            	//buzzer_end();
+				RGB_LED_Set_Color(COLOR_GREEN);
+
+            }
 
             if (g_latest_sensor_data.mode != UNINTILIZED_MODE && g_latest_sensor_data.mode != current_data.mode) {
                 handle_event_transition(&current_data, g_latest_sensor_data.mode);
             }
 
+
+
             g_latest_sensor_data = current_data;
-            osMessageQueuePut(g_sensor_queue, &current_data, 0, 0);
+            //osMessageQueuePut(g_sensor_queue, &current_data, 0, 0);
 
-
-
-            toggle_buzzer = (toggle_buzzer + 1) % 2;
-
-            osDelay(setting.delay);
+            if(current_data.mode == SAFE_MODE){
+            	osDelay(setting.delay * 2);
+            }
+            else{
+            	osDelay(setting.delay);
+            }
         }
     }
 }
@@ -119,12 +136,14 @@ static uint8_t read_all_sensors(DHT* dht, ADC_Part* pot, ADC_Part* light, Celsiu
 
 static void process_sensor_data(SensorData* data, const CelsiusAndHumidity* ch, uint16_t pot_val, uint16_t light_val, DateTime* datetime)
 {
+    data->timestamp = datetime_to_timestamp(datetime);
     data->volage = get_voltage(pot_val);
     data->light = map_to_percentage(light_val, LIGHT_MAX_VALUE);
-    data->timestamp = datetime_to_timestamp(datetime);
+    data->humid = ch->humidity_integral;
+    data->temp = ch->tempature_integral;
 
-    data->humid = ch->humidity_integral + (ch->humidity_fractional / 100.0f);
-    data->temp = ch->tempature_integral + (ch->tempature_fractional / 100.0f);
+//    data->humid = ch->humidity_integral + (ch->humidity_fractional / 100.0f);
+//    data->temp = ch->tempature_integral + (ch->tempature_fractional / 100.0f);
 }
 
 static void handle_event_transition(SensorData* data, uint8_t prev_mode)
@@ -133,14 +152,10 @@ static void handle_event_transition(SensorData* data, uint8_t prev_mode)
     event_data.timestamp = data->timestamp;
 
     if (prev_mode == OK_MODE) {
-    	RGB_LED_Set_Color(COLOR_RED);
         event_data.event = EVENT_OK_TO_ERROR;
-        buzzer_start();
-    } else {
 
-    	RGB_LED_Set_Color(COLOR_GREEN);
+    } else {
         event_data.event = EVENT_ERROR_TO_OK;
-        buzzer_end();
     }
 
     osMessageQueuePut(g_event_queue, &event_data, 0, 0);
@@ -148,26 +163,26 @@ static void handle_event_transition(SensorData* data, uint8_t prev_mode)
 
 static uint8_t is_in_range(CollectorSetting* cs, SensorData* sensor)
 {
-    uint8_t in_range = 1;
+    uint8_t in_range = TRUE;
 
     if (sensor->humid < cs->min_humidity) {
-        printf("Humidity %d is below minimum %d \r\n", sensor->humid, cs->min_humidity);
-        in_range = 0;
+        printf("Humidity %u is below minimum %u \r\n", sensor->humid, cs->min_humidity);
+        in_range = FALSE;
     }
 
     if (sensor->temp < cs->min_temp || sensor->temp > cs->max_temp) {
-        printf("Temperature %d is out of range (%d - %d) \r\n", sensor->temp, cs->min_temp, cs->max_temp);
-        in_range = 0;
+        printf("Temperature %u is out of range (%u - %u) \r\n", sensor->temp, cs->min_temp, cs->max_temp);
+        in_range = FALSE;
     }
 
     if (sensor->light < cs->min_light) {
-        printf("Light %d is below minimum %d\r\n", sensor->light, cs->min_light);
-        in_range = 0;
+        printf("Light %u is below minimum %u\r\n", sensor->light, cs->min_light);
+        in_range = FALSE;
     }
 
     if (sensor->volage < cs->safe_voltage) {
         printf("Voltage %.2f is below safe minimum %.2f\r\n", sensor->volage, cs->safe_voltage);
-        in_range = 0;
+        in_range = FALSE;
     }
 
     return in_range;

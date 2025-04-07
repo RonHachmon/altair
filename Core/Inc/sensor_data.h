@@ -17,11 +17,11 @@
 
 typedef struct SensorData{
     uint32_t timestamp;
-    float temp;
-    float humid;
-    float volage;
+    uint8_t temp;
+    uint8_t humid;
     uint8_t light;
     uint8_t mode;
+    float volage;
 
 } SensorData;
 

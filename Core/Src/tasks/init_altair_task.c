@@ -21,6 +21,7 @@
 #include "tasks/logger_task.h"
 #include "tasks/flash_task.h"
 #include "tasks/uart_task.h"
+#include "tasks/keep_alive_task.h"
 
 #include "altair/message_handler.h"
 
@@ -42,6 +43,7 @@ static void create_event_task(void);
 static void create_logger_task(void);
 static void create_collector_task(void);
 static void create_transmit_task(void);
+static void create_keep_alive_task(void);
 
 // Finalization
 static void self_destruct(void);
@@ -50,6 +52,8 @@ static void self_destruct(void);
 
 void init_altair(void* context)
 {
+	printf("!!!!!!!!!!!!\r\n");
+
 	init_system();
 
 	create_recieve_task();
@@ -94,8 +98,19 @@ static void create_recieve_task() {
 }
 
 static void wait_for_time_sync() {
+
+//	while(1)
+//	{
+//
+//	    if(FLAG_SET_TIME & osEventFlagsGet(g_evtID)){
+//	    	break;
+//	    }
+//
+//	}
+
     printf("Please provide the time...\r\n");
-    osEventFlagsWait(g_evtID, FLAG_SET_TIME, osFlagsWaitAny, HAL_MAX_DELAY);
+    osEventFlagsWait(g_evtID, FLAG_SET_TIME, osFlagsWaitAny, 3000);
+
     printf("Time received. Continuing...\r\n");
 }
 
@@ -104,6 +119,8 @@ static void create_core_tasks() {
     create_logger_task();
     create_collector_task();
     create_transmit_task();
+    create_keep_alive_task();
+
 }
 
 static void create_event_task() {
@@ -133,7 +150,7 @@ static void create_logger_task() {
         .priority = osPriorityLow7,
     };
 
-    if (osThreadNew(logger_beacon_task, &transmit_context.high_priority, &attrs) == NULL) {
+    if (osThreadNew(logger_beacon_task, NULL, &attrs) == NULL) {
         printf("FAILED to create logger task\r\n");
     }
 }
@@ -142,7 +159,7 @@ static void create_collector_task() {
     const osThreadAttr_t attrs = {
         .name = "collectDataTask",
         .stack_size = 128 * 4 * 8,
-        .priority = osPriorityRealtime7,
+        .priority = osPriorityHigh7,
     };
 
     static CollectorSetting settings = {0};
@@ -163,6 +180,18 @@ static void create_transmit_task() {
     if (osThreadNew(transmit_task, &transmit_context, &attrs) == NULL) {
         printf("FAILED to create transmit task\r\n");
     }
+}
+static void create_keep_alive_task(){
+    const osThreadAttr_t attrs = {
+        .name = "KeepAliveTask",
+        .stack_size = 128 * 4 * 16,
+        .priority = osPriorityRealtime7,
+    };
+
+    if (osThreadNew(keep_alive_task, &transmit_context.high_priority , &attrs) == NULL) {
+        printf("FAILED to create keep alive task\r\n");
+    }
+
 }
 
 static void self_destruct() {
